@@ -1,0 +1,20 @@
+$TTL 2d    ; default TTL for zone
+
+$ORIGIN itm.home.
+
+@         IN      SOA   ns.itm.home. nisou624.itm.home. (
+                                2025031900 ; serial number
+                                12h        ; refresh
+                                15m        ; update retry
+                                4d         ; expiry
+                                2h         ; minimum
+                                )
+	  IN	  NS	ns.itm.home.
+
+ns	  IN	  A	192.168.1.10
+
+; -- our records
+
+dev-nisou IN	  A	192.168.1.11
+
+dashboard.wazuh IN	A 192.168.1.21
