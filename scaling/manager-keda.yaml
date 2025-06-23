@@ -1,0 +1,34 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: wazuh-manager-worker
+  namespace: site-a
+spec:
+  scaleTargetRef:
+    kind: StatefulSet
+    name: wazuh-manager-worker
+  pollingInterval: 30      # seconds between checks
+  cooldownPeriod: 300      # seconds to wait before scaling down
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+  - type: prometheus
+    metadata:
+      # 1) Must be exactly 'serverAddress'
+      serverAddress: 'http://prometheus-server.monitoring.svc.itm.local:80'
+      insecureSkipTLSVerify: "true"
+      metricName: "queue_usage_percent"
+      # 3) Your PromQL query
+      query: |
+        max(
+          wazuh_event_queue_usage{
+            job="wazuh-file-exporter",
+            pod=~"wazuh-manager-worker-.*"
+          }
+        )
+      # 4) Threshold (in same units as your query result)
+      threshold: "0.25"
+      # NEW: give Prometheus Adapter more time to answer
+      serverTimeout: "30s"
+      # NEW: cache/memoize results for 15s between queries
+      metricResolution: "15s"

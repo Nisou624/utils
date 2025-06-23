@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-metrics-fetcher
+  namespace: site-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-metrics-fetcher
+  template:
+    metadata:
+      labels:
+        app: wazuh-metrics-fetcher
+    spec:
+      containers:
+        - name: fetcher
+          image: nisou624/wazuh-metrics-fetcher:latest
+          imagePullPolicy: IfNotPresent
+          # override entrypoint to loop every 10 seconds
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while true; do
+                /app/WazuhMetricsFetcher.sh   # adjust if your binary has a different path/name
+                sleep 10
+              done
+          env:
+            - name: hostname
+              value: "https://wazuh"
+            - name: API_PORT
+              value: "55000"
+            - name: pushgateway
+              value: "http://prometheus-prometheus-pushgateway.monitoring.svc.itm.local:9091"
+            - name: username
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-api-cred
+                  key: username
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-api-cred
+                  key: password
+      # default restartPolicy is Always, so if your loop ever exits/crashes it will be restarted
